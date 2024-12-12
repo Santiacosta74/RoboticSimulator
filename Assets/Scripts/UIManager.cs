@@ -1,13 +1,19 @@
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.SceneManagement; // Para gestionar la recarga de la escena.
+using UnityEngine.SceneManagement;
+using TMPro;// Para gestionar la recarga de la escena.
 
 public class UIManager : MonoBehaviour
 {
+    [Header("Componentes UI")]
     public Button readyButton;
     public Button resetButton; // Nuevo botón Reset.
     public Slider speedSlider; // Slider para ajustar la velocidad.
+    public TMP_Text speedText;     // Texto para mostrar la velocidad encima del Slider.
+    public RectTransform speedTextRect; // RectTransform del texto para posicionarlo dinámicamente.
     public Toggle lineToggle;  // Toggle para mostrar/ocultar la línea.
+
+    [Header("Componentes del Robot")]
     public LineDrawer lineDrawer;
     public RobotFollower robotFollower;
 
@@ -23,6 +29,9 @@ public class UIManager : MonoBehaviour
 
         lineToggle.onValueChanged.AddListener(ToggleLineVisibility);
         lineToggle.isOn = lineDrawer.enabled;  // Ajustar el toggle según si la línea está activa o no.
+
+        // Actualizar el texto inicialmente
+        UpdateSpeed(speedSlider.value);
     }
 
     void OnReadyClicked()
@@ -45,11 +54,31 @@ public class UIManager : MonoBehaviour
     void UpdateSpeed(float value)
     {
         robotFollower.speed = value;
+
+        // Actualizar el texto con el valor de la velocidad
+        speedText.text = $"{value:F2}Km/h";
+
+        // Mover el texto para que esté sobre el handle del slider
+        UpdateSpeedTextPosition();
     }
 
     // Método para controlar la visibilidad de la línea desde el toggle.
     void ToggleLineVisibility(bool isVisible)
     {
         lineDrawer.enabled = isVisible;
+    }
+
+    // Método para mover el texto encima del handle del slider
+    void UpdateSpeedTextPosition()
+    {
+        if (speedSlider.fillRect != null)
+        {
+            // Obtener la posición del handle
+            RectTransform handleRect = speedSlider.handleRect;
+            Vector3 handlePosition = handleRect.position;
+
+            // Mover el texto a la posición del handle
+            speedTextRect.position = handlePosition + new Vector3(0, 30f, 0); // Ajustar el desplazamiento vertical (30f) según lo necesario.
+        }
     }
 }
