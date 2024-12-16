@@ -1,23 +1,26 @@
-// RobotFollower.cs
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class RobotFollower : MonoBehaviour
 {
-    public LineRenderer lineRenderer; // Referencia al LineRenderer.
-    public float speed = 5f; // Velocidad del robot.
-    public float rotationSpeed = 5f; // Velocidad de rotación (suavidad).
+    public LineRenderer lineRenderer;
+    public float speed = 5f;
+    public float rotationSpeed = 5f;
+    public float baseSpeed;   // Velocidad base antes de ajustes (esto es lo que ahora se calcula desde el peso).
+    public float weight;      // Peso del robot.
 
     private int currentPointIndex = 0;
-    private List<Vector3> linePoints = new List<Vector3>(); // Usamos una lista para actualización dinámica.
+    private List<Vector3> linePoints = new List<Vector3>();
+    private bool isMoving = false;
 
-    public bool isContinuousMode = false; // Indica si el modo continuo está activado.
-    private bool isMoving = false; // Controla si el robot está en movimiento.
+    [Header("Configuración de Velocidades")]
+    public float minSpeed = 5f; // Velocidad mínima en km/h
+    public float maxSpeed = 70f; // Velocidad máxima en km/h
+    public float minWeight = 10f; // Peso mínimo en kg
+    public float maxWeight = 100f; // Peso máximo en kg
 
     public void LoadLinePoints()
     {
-        // Cargar los puntos actuales del LineRenderer.
         int pointCount = lineRenderer.positionCount;
         linePoints.Clear();
 
@@ -26,7 +29,6 @@ public class RobotFollower : MonoBehaviour
             linePoints.Add(lineRenderer.GetPosition(i));
         }
 
-        // Posicionar el robot en el primer punto de la línea.
         if (linePoints.Count > 0)
         {
             transform.position = linePoints[0];
@@ -37,72 +39,40 @@ public class RobotFollower : MonoBehaviour
 
     void Update()
     {
-        if (linePoints == null || linePoints.Count == 0)
+        if (linePoints == null || linePoints.Count == 0 || !isMoving)
             return;
 
-        if (isMoving)
-        {
-            MoveAlongLine();
-        }
-
-        // En modo continuo, revisa si hay nuevos puntos para agregar.
-        if (isContinuousMode)
-        {
-            UpdateLinePoints();
-        }
+        MoveAlongLine();
     }
 
     void MoveAlongLine()
     {
-        // Moverse hacia el punto actual.
         Vector3 target = linePoints[currentPointIndex];
         transform.position = Vector3.MoveTowards(transform.position, target, speed * Time.deltaTime);
 
-        // Calcular la dirección hacia el próximo punto
         Vector3 direction = target - transform.position;
-
-        // Rotar hacia la dirección del siguiente punto
-        if (direction.magnitude > 0.1f)  // Evitar rotación innecesaria cuando ya está cerca
+        if (direction.magnitude > 0.1f)
         {
             Quaternion targetRotation = Quaternion.LookRotation(direction);
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
         }
 
-        // Verificar si llegó al punto.
         if (Vector3.Distance(transform.position, target) < 0.1f)
         {
             currentPointIndex++;
-
-            // Si llegó al final de la línea.
             if (currentPointIndex >= linePoints.Count)
             {
-                if (isContinuousMode)
-                {
-                    isMoving = false; // Esperar nuevos puntos.
-                }
-                else
-                {
-                    Debug.Log("El robot ha llegado al final de la línea.");
-                    enabled = false; // Detener el movimiento en modo estático.
-                }
+                isMoving = false;
+                Debug.Log("El robot ha llegado al final de la línea.");
             }
         }
     }
 
-    void UpdateLinePoints()
+    public void UpdateSpeedBasedOnWeight()
     {
-        // Agregar nuevos puntos al final de la lista.
-        int pointCount = lineRenderer.positionCount;
-
-        for (int i = linePoints.Count; i < pointCount; i++)
-        {
-            linePoints.Add(lineRenderer.GetPosition(i));
-        }
-
-        // Si hay nuevos puntos y el robot estaba detenido, reanudar el movimiento.
-        if (!isMoving && linePoints.Count > currentPointIndex)
-        {
-            isMoving = true;
-        }
+        // Interpolar la velocidad base basada en el peso
+        float calculatedSpeed = Mathf.Lerp(maxSpeed, minSpeed, (weight - minWeight) / (maxWeight - minWeight));
+        baseSpeed = Mathf.Clamp(calculatedSpeed, minSpeed, maxSpeed);
+        speed = baseSpeed;  // La velocidad final se ajusta con la baseSpeed calculada
     }
 }

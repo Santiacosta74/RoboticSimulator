@@ -1,12 +1,12 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.EventSystems; // Importar para detectar la UI.
+using UnityEngine.EventSystems;
 
 public class LineDrawer : MonoBehaviour
 {
     public Camera mainCamera;
     public LineRenderer lineRenderer;
-    public float lineWidth = 0.05f;
+    public float lineWidth = 0.05f;  // Ancho de la línea predeterminado
     public LayerMask drawMask;
 
     private List<Vector3> points = new List<Vector3>();
@@ -16,6 +16,7 @@ public class LineDrawer : MonoBehaviour
         if (!lineRenderer)
             lineRenderer = GetComponent<LineRenderer>();
 
+        // Aplica el valor inicial de lineWidth al LineRenderer
         lineRenderer.startWidth = lineWidth;
         lineRenderer.endWidth = lineWidth;
         lineRenderer.positionCount = 0;
@@ -23,9 +24,8 @@ public class LineDrawer : MonoBehaviour
 
     void Update()
     {
-        if (Input.GetMouseButton(0)) // Botón izquierdo del mouse presionado.
+        if (Input.GetMouseButton(0))
         {
-            // Verifica si el mouse está sobre la UI.
             if (IsPointerOverUI())
                 return;
 
@@ -51,7 +51,6 @@ public class LineDrawer : MonoBehaviour
 
     bool IsPointerOverUI()
     {
-        // Devuelve true si el mouse está sobre un elemento de UI.
         return EventSystem.current.IsPointerOverGameObject();
     }
 }
