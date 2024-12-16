@@ -149,8 +149,10 @@ public class UIManager : MonoBehaviour
         }
     }
 
-    void UpdateLineWidthFromSlider(float value)
+    public void UpdateLineWidthFromSlider(float value)
     {
-        lineDrawer.lineWidth = value;  // Actualiza el ancho de la línea en el LineDrawer
+        lineDrawer.lineWidth = value;  // Cambiamos el valor de lineWidth en LineDrawer
+        lineDrawer.UpdateLineWidth();  // Llamamos a la función para actualizar el ancho de la línea
     }
+
 }

@@ -1,13 +1,12 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.EventSystems;
+using UnityEngine.EventSystems;  // Agregado para poder utilizar el EventSystem
 
 public class LineDrawer : MonoBehaviour
 {
     public Camera mainCamera;
     public LineRenderer lineRenderer;
-    public float lineWidth = 0.05f;  // Ancho de la línea predeterminado
-    public LayerMask drawMask;
+    public float lineWidth = 0.05f; // Ancho inicial de la línea
 
     private List<Vector3> points = new List<Vector3>();
 
@@ -16,19 +15,16 @@ public class LineDrawer : MonoBehaviour
         if (!lineRenderer)
             lineRenderer = GetComponent<LineRenderer>();
 
-        // Aplica el valor inicial de lineWidth al LineRenderer
         lineRenderer.startWidth = lineWidth;
         lineRenderer.endWidth = lineWidth;
-        lineRenderer.positionCount = 0;
+        lineRenderer.positionCount = 0;  // Asegúrate de que no haya puntos al inicio
     }
 
     void Update()
     {
-        if (Input.GetMouseButton(0))
+        // Dibuja la línea solo si el botón izquierdo del ratón está presionado y no está sobre la UI
+        if (Input.GetMouseButton(0) && !IsPointerOverUI())
         {
-            if (IsPointerOverUI())
-                return;
-
             DrawLine();
         }
     }
@@ -36,7 +32,7 @@ public class LineDrawer : MonoBehaviour
     void DrawLine()
     {
         Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
-        if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, drawMask))
+        if (Physics.Raycast(ray, out RaycastHit hit))
         {
             Vector3 point = hit.point;
 
@@ -49,6 +45,19 @@ public class LineDrawer : MonoBehaviour
         }
     }
 
+    // Función para actualizar el ancho de la línea en el LineRenderer
+    public void UpdateLineWidth()
+    {
+        // Actualizamos tanto el ancho de inicio como el de fin
+        lineRenderer.startWidth = lineWidth;
+        lineRenderer.endWidth = lineWidth;
+
+        // Forzamos la actualización visual de la línea
+        lineRenderer.GetComponent<LineRenderer>().enabled = false;
+        lineRenderer.GetComponent<LineRenderer>().enabled = true;
+    }
+
+    // Función para verificar si el puntero está sobre algún elemento de la UI
     bool IsPointerOverUI()
     {
         return EventSystem.current.IsPointerOverGameObject();
