@@ -2,7 +2,6 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using TMPro;
-using System;
 
 public class UIManager : MonoBehaviour
 {
@@ -14,20 +13,25 @@ public class UIManager : MonoBehaviour
     public RectTransform speedTextRect;
     public TMP_InputField speedInputField;
     public Slider weightSlider;
-    public TMP_Text weightText;
     public TMP_InputField weightInputField;
-    public Toggle lineToggle;
-    public Slider lineWidthSlider;  // Slider para controlar el ancho de la línea
+    public TMP_Text weightText;
+    public TMP_Text resultText;
+    public static int trialCount = 0;
 
     [Header("Componentes del Robot")]
     public LineDrawer lineDrawer;
     public RobotFollower robotFollower;
 
     [Header("Parámetros del Robot")]
-    public float baseWeight = 50f;        // Peso base del robot (Kg).
+    public float baseWeight = 50f;
+    public Slider lineWidthSlider;
+
+    private ResultManager resultManager;
 
     private void Start()
     {
+        resultManager = FindObjectOfType<ResultManager>();  // Obtener la referencia al ResultManager
+
         readyButton.onClick.AddListener(OnReadyClicked);
         resetButton.onClick.AddListener(OnResetClicked);
 
@@ -41,14 +45,11 @@ public class UIManager : MonoBehaviour
 
         weightInputField.onEndEdit.AddListener(UpdateWeightFromInput);
 
-        lineToggle.onValueChanged.AddListener(ToggleLineVisibility);
-        lineToggle.isOn = lineDrawer.enabled;
-
-        lineWidthSlider.onValueChanged.AddListener(UpdateLineWidthFromSlider);  // Escuchar cambios del slider de ancho de línea
-        lineWidthSlider.value = lineDrawer.lineWidth;  // Iniciar el slider con el valor actual del ancho de la línea
+        lineWidthSlider.onValueChanged.AddListener(UpdateLineWidthFromSlider);  // Conectar el slider de ancho de línea
 
         UpdateSpeedText(speedSlider.value);
         UpdateWeightText(baseWeight);
+        UpdateResultText();  // Muestra el contador de pruebas desde 0
     }
 
     void OnReadyClicked()
@@ -56,13 +57,27 @@ public class UIManager : MonoBehaviour
         lineDrawer.enabled = false;
         robotFollower.LoadLinePoints();
         Debug.Log("Dibujo finalizado. Robot preparado para moverse.");
+
+        // Incrementar el número de prueba
+        trialCount++;
+        UpdateResultText();
+
+        // Ocultar el panel de resultados
+        resultManager.HideResultPanel();
     }
 
     void OnResetClicked()
     {
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        UpdateResultText();
     }
 
+    void UpdateResultText()
+    {
+        resultText.text = $"";  // Limpiar los resultados al reiniciar
+    }
+
+    // Métodos para actualizar la velocidad, peso, etc.
     void UpdateSpeedFromSlider(float value)
     {
         robotFollower.baseSpeed = value;
@@ -77,7 +92,6 @@ public class UIManager : MonoBehaviour
             robotFollower.baseSpeed = newSpeed;
             speedSlider.value = newSpeed;
             UpdateSpeedFromWeight();
-            UpdateWeightFromSpeed(newSpeed);
         }
         else
         {
@@ -85,14 +99,10 @@ public class UIManager : MonoBehaviour
         }
     }
 
-    private void UpdateWeightFromSpeed(float newSpeed)
-    {
-        throw new NotImplementedException();
-    }
-
     void UpdateWeightFromSlider(float value)
     {
         UpdateWeight(value);
+        UpdateWeightText(value);
     }
 
     void UpdateWeightFromInput(string value)
@@ -119,13 +129,11 @@ public class UIManager : MonoBehaviour
     void UpdateSpeedText(float value)
     {
         speedText.text = $"{value:F2} Km/h";
-        UpdateSpeedTextPosition();
     }
 
     void UpdateWeightText(float baseWeight)
     {
         weightText.text = $"{baseWeight:F2} Kg";
-        UpdateSpeedFromWeight();
     }
 
     void UpdateWeight(float weight)
@@ -134,25 +142,10 @@ public class UIManager : MonoBehaviour
         UpdateSpeedFromWeight();
     }
 
-    void ToggleLineVisibility(bool isVisible)
+    // Función para actualizar el ancho de la línea
+    void UpdateLineWidthFromSlider(float value)
     {
-        lineDrawer.enabled = isVisible;
+        lineDrawer.lineWidth = value;  // Cambiar el ancho de la línea
+        lineDrawer.UpdateLineWidth();  // Actualizar visualmente el ancho de la línea
     }
-
-    void UpdateSpeedTextPosition()
-    {
-        if (speedSlider.fillRect != null)
-        {
-            RectTransform handleRect = speedSlider.handleRect;
-            Vector3 handlePosition = handleRect.position;
-            speedTextRect.position = handlePosition + new Vector3(0, 30f, 0);
-        }
-    }
-
-    public void UpdateLineWidthFromSlider(float value)
-    {
-        lineDrawer.lineWidth = value;  // Cambiamos el valor de lineWidth en LineDrawer
-        lineDrawer.UpdateLineWidth();  // Llamamos a la función para actualizar el ancho de la línea
-    }
-
 }

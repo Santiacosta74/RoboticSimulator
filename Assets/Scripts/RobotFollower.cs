@@ -11,7 +11,7 @@ public class RobotFollower : MonoBehaviour
 
     private int currentPointIndex = 0;
     private List<Vector3> linePoints = new List<Vector3>();
-    private bool isMoving = false;
+    public bool isMoving = false;
 
     [Header("Configuración de Velocidades")]
     public float minSpeed = 5f; // Velocidad mínima en km/h
